@@ -7,19 +7,13 @@ import android.provider.CalendarContract;
 import java.util.Date;
 
 public class EventBuilder {
-    private Context ctx;
+
     private String name;
     private String description;
     private Date startDate;
     private Date endDate;
 
-    private Intent calendarEvent;
-
     public EventBuilder() {
-    }
-    public EventBuilder setCtx(Context ctx) {
-        this.ctx = ctx;
-        return this;
     }
 
     public EventBuilder setName(String name) {

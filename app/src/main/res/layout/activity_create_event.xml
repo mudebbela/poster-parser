@@ -46,6 +46,12 @@
         android:id="@+id/RadioGroupDescription"
         android:dividerPadding="?attr/dialogPreferredPadding" >
 
+        <Button
+            android:id="@+id/buttonMockEvent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Mock Event" />
     </RadioGroup>
 
     <LinearLayout

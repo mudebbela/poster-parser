@@ -135,7 +135,8 @@ public class MainActivity extends AppCompatActivity {
             Uri uri =  data.getData();
             //start make event activity
             Intent startCreateEventActivityIntent =  new Intent(getApplicationContext(), CreateEventActivity.class);
-            startCreateEventActivityIntent.putExtra(PPConstants.URI, uri);
+            String uriString =  uri.toString();
+            startCreateEventActivityIntent.putExtra(PPConstants.URI, uriString);
             startActivity(startCreateEventActivityIntent);
 
 
