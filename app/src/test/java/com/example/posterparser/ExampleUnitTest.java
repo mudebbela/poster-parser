@@ -1,6 +1,11 @@
 package com.example.posterparser;
 
+import android.content.Intent;
+import android.provider.CalendarContract;
+
 import org.junit.Test;
+
+import java.util.Date;
 
 import static org.junit.Assert.*;
 
@@ -14,4 +19,5 @@ public class ExampleUnitTest {
     public void addition_isCorrect() {
         assertEquals(4, 2 + 2);
     }
+
 }

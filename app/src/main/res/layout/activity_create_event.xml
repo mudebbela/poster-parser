@@ -1,77 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/TextViewStartDate"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipToPadding="false"
-    android:dividerPadding="?attr/dialogPreferredPadding"
     android:orientation="vertical"
     android:padding="?attr/listPreferredItemPaddingEnd"
     android:paddingHorizontal="?attr/listPreferredItemPaddingStart"
     tools:context=".CreateEventActivity">
 
-    <ImageView
-        android:id="@+id/ImageViewPoster"
-        android:layout_width="235dp"
-        android:layout_height="273dp"
-        android:layout_gravity="center"
-        tools:srcCompat="@drawable/default_poster" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Title"
-        android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
-
-    <RadioGroup
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/RadioGroupTitle"
-        android:dividerPadding="?attr/dialogPreferredPadding">
-
-    </RadioGroup>
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Description"
-        android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
-
-    <RadioGroup
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/RadioGroupDescription"
-        android:dividerPadding="?attr/dialogPreferredPadding" >
-
-        <Button
-            android:id="@+id/buttonMockEvent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Mock Event" />
-    </RadioGroup>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/button2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Create" />
+        <ImageView
+            android:id="@+id/ImageViewPoster"
+            android:layout_width="235dp"
+            android:layout_height="273dp"
+            android:layout_gravity="center"
+            tools:srcCompat="@drawable/default_poster" />
 
-        <Button
-            android:id="@+id/button3"
-            android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Save Session" />
+            android:text="Title"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+
+
+        <RadioGroup
+            android:id="@+id/RadioGroupTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:dividerPadding="?attr/dialogPreferredPadding">
+
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+        <RadioGroup
+            android:id="@+id/RadioGroupDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:dividerPadding="?attr/dialogPreferredPadding">
+
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/textViewEndDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Date"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+
+        <RadioGroup
+            android:id="@+id/radioGroupStartDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+        </RadioGroup>
+
+<!--        <DatePicker-->
+<!--            android:id="@+id/DatePickerStartDate"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:calendarViewShown="false"-->
+<!--            android:datePickerMode="spinner" />-->
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="End Date"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display1" />
+
+        <RadioGroup
+            android:id="@+id/radioGroupEndDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </RadioGroup>
+
+
+<!--        <DatePicker-->
+<!--            android:id="@+id/DatePickerEndDate"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:calendarViewShown="false"-->
+<!--            android:datePickerMode="spinner" />-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/buttonCreatEvent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Create" />
+
+            <Button
+                android:id="@+id/buttonSaveSession"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save Session" />
+        </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+</ScrollView>

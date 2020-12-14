@@ -1,25 +1,34 @@
 package com.example.posterparser;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.resources.TextAppearance;
 import com.google.android.material.snackbar.Snackbar;
+import com.squareup.picasso.Picasso;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -27,15 +36,21 @@ import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
 
 
 
-    private Button btnUseCamera,btnUseSavedImage;
     private String currentPhotoPath;
     private Uri photoURI;
+    static String TAG;
+    private List<EventEntity> events;
+    private EventAdapter eventAdapter;
+    private LinearLayoutManager mLinearLayoutManager;
+    private RecyclerView rvEvents;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,47 +58,94 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        TAG =  this.getLocalClassName();
+
+        events =  new LinkedList();
+        eventAdapter =  new EventAdapter(events, getApplicationContext());
+        mLinearLayoutManager =  new LinearLayoutManager(this);
+        Picasso.get().setLoggingEnabled(true);
+
+        rvEvents = findViewById(R.id.recyclerViewEvents);
+        rvEvents.setHasFixedSize(true);
+        rvEvents.setAdapter(eventAdapter);
+        rvEvents.setLayoutManager(mLinearLayoutManager);
 
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        fab.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                //TODO  Dialogue menu to use saved Img or use Camera
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                String [] options = {"Take Picture", "Use Saved Image"};
+                builder.setTitle("Get Poster");
+                builder.setItems(options, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch(which) {
+                            case 1: {
+                                PPutils.toast(getApplicationContext(), "using saved image");
+                                useSavedImage();
+                                break;
+                            }
+                            case 0:{
+                                PPutils.toast(getApplicationContext(), "Taking picture");
+                                takePicture();
+                                break;
+                            }
+                            default:{
+                                PPutils.toast(getApplicationContext(),"which: "+which);
+                            }
+                        }
+
+                    }
+                });
+                AlertDialog dialog =  builder.create();
+                dialog.show();
             }
         });
 
-        btnUseCamera =  findViewById(R.id.buttonTakePicture);
-        btnUseSavedImage = findViewById(R.id.buttonUseSaveImage);
+        PPDatabase db = Room.databaseBuilder(getApplicationContext(), PPDatabase.class, "Poster-Parser").build();
 
-        Toast.makeText(this,   btnUseSavedImage.getText(), Toast.LENGTH_SHORT).show();
+        final EventDao ed = db.eventDao();
 
-        btnUseSavedImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // solution found in http://blog.vogella.com/2011/09/13/android-how-to-get-an-image-via-an-intent/
-                //TODO remove
-                Toast.makeText(MainActivity.this, "Use Saved Image", Toast.LENGTH_SHORT).show();
-                Intent getSavedImageIntent =  new Intent();
-                getSavedImageIntent.setType("image/*");
-                getSavedImageIntent.setAction(Intent.ACTION_GET_CONTENT);
+        //ed.getAll();
 
-                startActivityForResult(Intent.createChooser(getSavedImageIntent, "Select Picture"), PPConstants.REQUEST_SAVED_IMAGE);
+        Thread t =  new Thread(){
+          public void run(){
+              List<EventEntity> eds = ed.getAll();
+              //add to view
+              Log.d(TAG, "run: number of events: " +eds.size());
+              if(eds.size()> 0){
+                  TextView welcome = findViewById(R.id.textViewWelcome);
+                  welcome.setText("Saved Sessions");
+                  welcome.setTextAppearance(R.style.TextAppearance_AppCompat_Display2);
+                  for(EventEntity ed : eds){
+                      Log.d(TAG, "Event UID: " + ed.uid);
+                      Log.d(TAG, "Event Url: " + ed.imageUrl);
+                      Log.d(TAG, "Event timestamp: " + ed.timestamp);
 
-            }
-        });
+                      events.add(ed);
+                      eventAdapter.notifyDataSetChanged();
+                  }
+              }
+              Log.d(TAG, "run: Done getting all");
+          }
+        };
 
-        btnUseCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                takePicture();
-
-
-            }
-        });
+        t.start();
 
 
+
+    }
+
+    private void useSavedImage() {
+        // solution found in http://blog.vogella.com/2011/09/13/android-how-to-get-an-image-via-an-intent/
+        //TODO remove
+        Intent getSavedImageIntent =  new Intent();
+        getSavedImageIntent.setType("image/*");
+        getSavedImageIntent.setAction(Intent.ACTION_GET_CONTENT);
+
+        startActivityForResult(Intent.createChooser(getSavedImageIntent, "Select Picture"), PPConstants.REQUEST_SAVED_IMAGE);
     }
 
     private void takePicture() {
@@ -121,14 +183,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (requestCode == PPConstants.REQUEST_IMAGE_CAPTURE) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            // go to Create event activity
-            // give it Bitmap and imagePath
+//            Bundle extras = data.getExtras();
+//            Bitmap imageBitmap = (Bitmap) extras.get("data");
+//            // go to Create event activity
+//            // give it Bitmap and imagePath
             Intent startCreateEventActivityIntent =  new Intent(getApplicationContext(), CreateEventActivity.class);
-            startCreateEventActivityIntent.putExtra(PPConstants.URI, photoURI);
-            startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_PATH_CONSTANT, currentPhotoPath);
-            startCreateEventActivityIntent.putExtra(PPConstants.BITMAP_CONSTANT, imageBitmap);
+            startCreateEventActivityIntent.putExtra(PPConstants.URI, photoURI.toString());
+//            startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_PATH_CONSTANT, currentPhotoPath);
+//            startCreateEventActivityIntent.putExtra(PPConstants.BITMAP_CONSTANT, imageBitmap);
             startActivity(startCreateEventActivityIntent);
         } else if(requestCode == PPConstants.REQUEST_SAVED_IMAGE){
             //pass the URI to make image intent
@@ -177,8 +239,10 @@ public class MainActivity extends AppCompatActivity {
                 storageDir      /* directory */
         );
 
-        // Save a file: path for use with ACTION_VIEW intents
+        // Save a file: path for use with ACTION_VIEW intents'
+
         currentPhotoPath = image.getAbsolutePath();
+        Log.d(this.getLocalClassName(), "createImageFile: absolutePath: "+currentPhotoPath);
         return image;
     }
 
