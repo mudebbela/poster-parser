@@ -35,7 +35,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.posterparser.fileprovider"
+            android:authorities="com.example.posterparser"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
