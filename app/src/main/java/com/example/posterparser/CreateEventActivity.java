@@ -39,6 +39,7 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -77,6 +78,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private String titleString, descriptionString;
     private Date eventStartDate, eventEndDate;
     private DateFormat df;
+    private boolean isRequestSavedImages;
+    private String uriString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +91,9 @@ public class CreateEventActivity extends AppCompatActivity {
         final EventDao ed = db.eventDao();
         //get intent and parse created activity
         Intent intent = getIntent();
+        uriString =  intent.getStringExtra(PPConstants.URI);
+        isRequestSavedImages = intent.hasExtra(PPConstants.IS_REQUEST_SAVED_IMAGE);
+
         textRecognizer = TextRecognition.getClient();
         stringTreeMap =  new TreeMap();
         parser = new Parser();
@@ -96,8 +102,6 @@ public class CreateEventActivity extends AppCompatActivity {
 
 
 
-        //getURI and get bitmap
-        final String uriString =  intent.getStringExtra(PPConstants.URI);
         final Uri bitmapUri = Uri.parse(uriString);
         Log.d(TAG, "onCreate: URI String: "+ uriString);
         rotation = getRotation(bitmapUri);
@@ -140,9 +144,20 @@ public class CreateEventActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 final EventEntity ee =  new EventEntity();
-                //ee.imageUrl = uriString;
-                String bitmapRealPath = PPutils.getRealPathFromURI(bitmapUri, getApplicationContext());
-                ee.imageUrl = getInternalFileUrl(bitmapRealPath);
+                ee.imageUrl = bitmapUri.toString();
+                //Create Local File to store saved image
+                if(isRequestSavedImages){
+                    Log.d(TAG, "onClick: Saving Requested Image");
+                    try {
+                        File imageFile =PPutils.createImageFile(getApplicationContext());
+                        FileOutputStream ofs =  new FileOutputStream(imageFile.getAbsoluteFile());
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, ofs);
+                        ee.imageUrl = PPutils.getUriForFile(imageFile, getApplicationContext());
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 Date now = new Date();
                 ee.timestamp = now.getTime();
                 ee.uid = (int) now.getTime();
@@ -159,12 +174,7 @@ public class CreateEventActivity extends AppCompatActivity {
             }
         });
         Log.d("Setting IMG", "Setting Image:  \""+ bitmapUri+"\"");
-
-        //Picasso.get().load(uriString).into(ivPoster);
-
         PPutils.setImagetoView(uriString, ivPoster);
-
-
         //Parse
         parseImage(bitmap);
 
@@ -181,7 +191,7 @@ public class CreateEventActivity extends AppCompatActivity {
         //return new Uri string
 
         Uri imageUri = FileProvider.getUriForFile(this,
-                "com.example.posterparser.fileprovider",
+                "com.example.posterparser",
                 image);
 
         return imageUri.toString();
