@@ -9,6 +9,8 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.core.content.FileProvider;
+
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedInputStream;
@@ -110,5 +112,13 @@ public class PPutils {
             cursor.close();
         }
         return result;
+    }
+
+    public static String getUriForFile(File imageFile, Context ctx){
+
+        Uri imageUri = FileProvider.getUriForFile(ctx,
+                "com.example.posterparser",
+                imageFile);
+        return  imageUri.toString();
     }
 }
