@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
             if (photoFile != null) {
                 //TODO add photo
                  photoURI = FileProvider.getUriForFile(this,
-                        "com.example.posterparser.fileprovider",
+                        "com.example.posterparser",
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, PPConstants.REQUEST_IMAGE_CAPTURE);
@@ -183,15 +183,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (requestCode == PPConstants.REQUEST_IMAGE_CAPTURE) {
-//            Bundle extras = data.getExtras();
-//            Bitmap imageBitmap = (Bitmap) extras.get("data");
-//            // go to Create event activity
-//            // give it Bitmap and imagePath
+
             Intent startCreateEventActivityIntent =  new Intent(getApplicationContext(), CreateEventActivity.class);
             startCreateEventActivityIntent.putExtra(PPConstants.URI, photoURI.toString());
-//            startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_PATH_CONSTANT, currentPhotoPath);
-//            startCreateEventActivityIntent.putExtra(PPConstants.BITMAP_CONSTANT, imageBitmap);
             startActivity(startCreateEventActivityIntent);
+
         } else if(requestCode == PPConstants.REQUEST_SAVED_IMAGE){
             //pass the URI to make image intent
             Uri uri =  data.getData();
@@ -199,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
             Intent startCreateEventActivityIntent =  new Intent(getApplicationContext(), CreateEventActivity.class);
             String uriString =  uri.toString();
             startCreateEventActivityIntent.putExtra(PPConstants.URI, uriString);
+            startCreateEventActivityIntent.putExtra(PPConstants.IS_REQUEST_SAVED_IMAGE, true);
             startActivity(startCreateEventActivityIntent);
 
 
