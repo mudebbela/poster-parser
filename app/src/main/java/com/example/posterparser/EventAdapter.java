@@ -70,6 +70,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
 
         public void setImage(String url){
             Log.d("Setting IMG", "Setting Image:  \""+ url+"\"");
+            //TODO standardize thumbnail sizes
             ImageView ivPosterPreview = mView.findViewById(R.id.imageViewPosterPreview);
             PPutils.setImagetoView(
                     url
