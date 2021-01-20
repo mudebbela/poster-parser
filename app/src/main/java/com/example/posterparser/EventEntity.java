@@ -15,4 +15,8 @@ public class EventEntity {
 
     @ColumnInfo(name = "timestamp")
     public long timestamp;
+
+
+    @ColumnInfo(name = "rotation")
+    public int rotation;
 }

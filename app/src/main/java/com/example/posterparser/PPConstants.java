@@ -8,5 +8,7 @@ public class PPConstants {
     public static final String IMAGE_PATH_CONSTANT      = "image_path";
     public static final String BITMAP_CONSTANT          = "bitmap";
     public static final String URI                      = "uri" ;
-    public static final String IS_REQUEST_SAVED_IMAGE   = "is_request_saved_image";
+    public static final String SAVE_IMAGE_FLAG = "save_image_flag";
+    public static final String FULL_IMAGE_PATH = "full_image_path";
+    public static final String IMAGE_ROTATION =  "image_rotation";
 }

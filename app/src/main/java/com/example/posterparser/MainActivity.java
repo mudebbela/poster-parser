@@ -3,15 +3,16 @@ package com.example.posterparser;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.resources.TextAppearance;
-import com.google.android.material.snackbar.Snackbar;
 import com.squareup.picasso.Picasso;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -27,13 +28,13 @@ import android.view.View;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -51,6 +52,42 @@ public class MainActivity extends AppCompatActivity {
     private EventAdapter eventAdapter;
     private LinearLayoutManager mLinearLayoutManager;
     private RecyclerView rvEvents;
+    private PPDatabase db;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        final EventDao ed = db.eventDao();
+        Thread updateSessionListThread =  new Thread(){
+            public void run(){
+                final List<EventEntity> eds = ed.getAll();
+                //add to view
+                Log.d(TAG, "run: number of events: " +eds.size());
+                if(eds.size()> 0){
+                    events.clear();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            TextView welcome = findViewById(R.id.textViewWelcome);
+                            welcome.setText("Saved Sessions");
+                            welcome.setTextAppearance(R.style.TextAppearance_AppCompat_Display2);
+                            for(EventEntity ed : eds){
+                                Log.d(TAG, "Event UID: " + ed.uid);
+                                Log.d(TAG, "Event Url: " + ed.imageUrl);
+                                Log.d(TAG, "Event timestamp: " + ed.timestamp);
+
+                                events.add(ed);
+                                eventAdapter.notifyDataSetChanged();
+                            }
+                        }
+                    });
+                }
+                Log.d(TAG, "run: Done getting all");
+            }
+        };
+        updateSessionListThread.start();
+
+   }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
         eventAdapter =  new EventAdapter(events, getApplicationContext());
         mLinearLayoutManager =  new LinearLayoutManager(this);
         Picasso.get().setLoggingEnabled(true);
-
         rvEvents = findViewById(R.id.recyclerViewEvents);
         rvEvents.setHasFixedSize(true);
         rvEvents.setAdapter(eventAdapter);
@@ -74,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                 String [] options = {"Take Picture", "Use Saved Image"};
                 builder.setTitle("Get Poster");
@@ -103,39 +138,7 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
             }
         });
-
-        PPDatabase db = Room.databaseBuilder(getApplicationContext(), PPDatabase.class, "Poster-Parser").build();
-
-        final EventDao ed = db.eventDao();
-
-        //ed.getAll();
-
-        Thread t =  new Thread(){
-          public void run(){
-              List<EventEntity> eds = ed.getAll();
-              //add to view
-              Log.d(TAG, "run: number of events: " +eds.size());
-              if(eds.size()> 0){
-                  TextView welcome = findViewById(R.id.textViewWelcome);
-                  welcome.setText("Saved Sessions");
-                  welcome.setTextAppearance(R.style.TextAppearance_AppCompat_Display2);
-                  for(EventEntity ed : eds){
-                      Log.d(TAG, "Event UID: " + ed.uid);
-                      Log.d(TAG, "Event Url: " + ed.imageUrl);
-                      Log.d(TAG, "Event timestamp: " + ed.timestamp);
-
-                      events.add(ed);
-                      eventAdapter.notifyDataSetChanged();
-                  }
-              }
-              Log.d(TAG, "run: Done getting all");
-          }
-        };
-
-        t.start();
-
-
-
+        db = Room.databaseBuilder(getApplicationContext(), PPDatabase.class, "Poster-Parser").build();
     }
 
     private void useSavedImage() {
@@ -183,9 +186,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (requestCode == PPConstants.REQUEST_IMAGE_CAPTURE) {
-
+            //TODO rotate image and save it to photo again
             Intent startCreateEventActivityIntent =  new Intent(getApplicationContext(), CreateEventActivity.class);
             startCreateEventActivityIntent.putExtra(PPConstants.URI, photoURI.toString());
+            startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_ROTATION, PPutils.getRotation(currentPhotoPath));
             startActivity(startCreateEventActivityIntent);
 
         } else if(requestCode == PPConstants.REQUEST_SAVED_IMAGE){
@@ -195,7 +199,8 @@ public class MainActivity extends AppCompatActivity {
             Intent startCreateEventActivityIntent =  new Intent(getApplicationContext(), CreateEventActivity.class);
             String uriString =  uri.toString();
             startCreateEventActivityIntent.putExtra(PPConstants.URI, uriString);
-            startCreateEventActivityIntent.putExtra(PPConstants.IS_REQUEST_SAVED_IMAGE, true);
+            startCreateEventActivityIntent.putExtra(PPConstants.SAVE_IMAGE_FLAG, true);
+            startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_ROTATION, 0);
             startActivity(startCreateEventActivityIntent);
 
 

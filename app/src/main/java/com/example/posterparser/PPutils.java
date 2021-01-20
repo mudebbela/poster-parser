@@ -2,15 +2,21 @@ package com.example.posterparser;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Rect;
+import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.content.FileProvider;
+import androidx.loader.content.CursorLoader;
 
+import com.google.mlkit.vision.text.Text;
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedInputStream;
@@ -22,19 +28,20 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.example.posterparser.MainActivity.TAG;
+
 public class PPutils {
     public static void toast(Context applicationContext, String text) {
         Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show();
     }
 
     public static void setImagetoView(String imageUrl, int default_image, ImageView userImage) {
-        Log.d("TAG", "setImagetoView: \""+imageUrl+"\"");
-        Picasso.get().load(imageUrl)
+        Picasso.get().load(imageUrl).fit()
                 .placeholder(default_image).into(userImage);
     }
+
     public static void setImagetoView(String imageUrl, int default_image, ImageView userImage, int rotation) {
-        Log.d("TAG", "setImagetoView: \""+imageUrl+"\"");
-        Picasso.get().load(imageUrl)
+        Picasso.get().load(imageUrl).fit()
                 .placeholder(default_image)
                 .rotate(rotation).into(userImage);
     }
@@ -100,18 +107,13 @@ public class PPutils {
         Log.d(PPutils.class.getName(), "saveFile: create file "+ destinationFilename);
     }
 
-    public static String getRealPathFromURI(Uri contentURI, Context ctx) {
-        String result;
-        Cursor cursor = ctx.getContentResolver().query(contentURI, null, null, null, null);
-        if (cursor == null) { // Source is Dropbox or other similar local file path
-            result = contentURI.getPath();
-        } else {
-            cursor.moveToFirst();
-            int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-            result = cursor.getString(idx);
-            cursor.close();
-        }
-        return result;
+    public static long getSize(Text.TextBlock block) {
+        //get Size of block
+        Rect box = block.getBoundingBox();
+        int numOfLetters = block.getText().length();
+        int height = box.top - box.bottom;
+        int width = box.left -  box.right;
+        return height * width/numOfLetters;
     }
 
     public static String getUriForFile(File imageFile, Context ctx){
@@ -120,5 +122,39 @@ public class PPutils {
                 "com.example.posterparser",
                 imageFile);
         return  imageUri.toString();
+    }
+
+    //From https://stackoverflow.com/questions/3401579/get-filename-and-path-from-uri-from-mediastore?rq=1
+    // will return the absolute file given the uri
+    public static String getRealPathFromURI(Uri contentUri, Context ctx) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+        CursorLoader loader = new CursorLoader(ctx, contentUri, proj, null, null, null);
+        Cursor cursor = loader.loadInBackground();
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        String result = cursor.getString(column_index);
+        cursor.close();
+        return result;
+    }
+
+    public static int getRotation(String fullImagePath) {
+        try {
+            ExifInterface current =  new ExifInterface(fullImagePath);
+            int orientationFlag  =current.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0);
+            Log.d(TAG, "getRotation: orientationFlag : "+orientationFlag);
+            switch (orientationFlag){
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return 90;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return 180;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return 270;
+                default:
+                    return 0;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 }

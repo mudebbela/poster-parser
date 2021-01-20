@@ -1,6 +1,7 @@
 package com.example.posterparser;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -49,8 +50,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Log.d(TAG, "onBindViewHolder: ");
         EventEntity ed = eventEntities.get(position);
-        holder.setImage(ed.imageUrl);
+        holder.setImage(ed.imageUrl, ed.rotation);
         holder.setDate(Long.toString(ed.timestamp));
+        holder.setListeners(ed.imageUrl, ed.rotation);
 
     }
 
@@ -68,16 +70,16 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
             mView = itemView;
         }
 
-        public void setImage(String url){
+        public void setImage(String url, int rotation){
             Log.d("Setting IMG", "Setting Image:  \""+ url+"\"");
             //TODO standardize thumbnail sizes
+
             ImageView ivPosterPreview = mView.findViewById(R.id.imageViewPosterPreview);
             PPutils.setImagetoView(
                     url
                     ,ivPosterPreview
+                    ,rotation
                     );
-
-//            Picasso.get().load(url).placeholder(R.drawable.common_google_signin_btn_icon_light_focused).into((ImageView)mView.findViewById(R.id.imageViewPosterPreview));
         }
         public void setDate(String string){
             Date date = new Date(Long.parseLong(string));
@@ -85,6 +87,20 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
 
             tvCreatedDate = mView.findViewById(R.id.textViewDateCreated);
             tvCreatedDate.setText("Created: "+date.toString());
+        }
+
+
+        public void setListeners(final String imageUrl, final int rotation) {
+
+            mView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent startCreateEventActivityIntent =  new Intent(ctx, CreateEventActivity.class);
+                    startCreateEventActivityIntent.putExtra(PPConstants.URI, imageUrl);
+                    startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_ROTATION, rotation);
+                    mView.getContext().startActivity(startCreateEventActivityIntent);
+                }
+            });
         }
     }
 }
