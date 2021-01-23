@@ -1,26 +1,18 @@
 package com.example.posterparser;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.Guideline;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.room.Room;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.ExifInterface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -40,23 +32,23 @@ import com.joestelmach.natty.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class CreateEventActivity extends AppCompatActivity implements DateTimePickerDialogFragment.NoticeDialogListener {
+public class CreateEventActivity extends AppCompatActivity implements DateTimePickerDialogFragment.NoticeDialogListener, PPDatePickerFragment.DateChangeListener, PPTimePickerFragment.TimeChangeListener {
 
     //UI object refrences
     private Bitmap bitmap;
     private RadioGroup rgTitle, rgDescription;
     private RadioGroup rgStartDate, rgEndDate;
-    private Button btnStartDateTimePicker;
+    private Button btnStartDateTimePicker, btnEndDateTimePicker;
     private ImageView ivPoster;
 
     private Button btnCreateEvent, btnSaveSession;
@@ -73,11 +65,24 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
     private Date selectedEventStartDate, selectedEventEndDate;
     private DateFormat df;
 
+    //Date from dialog variables
+    int year,month,day;
+    int minute,hour;
+    private boolean isDateChanged, isTimeChanged;
+    private boolean isStartDateTimePicker;
+    Date customEventStartDate, customEventEndDate;
+
     //Intent objects
     private boolean isFromSavedImage;
     private String uriString;
 
     private String TAG;
+    private long timestamp;
+    private EventEntity thisEd;
+    private int uid;
+    private PPDatabase db;
+    private EventDao ed;
+    private RadioButton rbCustomStartDate, rbCustomEndDate;
 
 
     @Override
@@ -86,29 +91,42 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
         setContentView(R.layout.activity_create_event);
         TAG =  this.getLocalClassName();
 
+        isDateChanged = false;
+        isTimeChanged = false;
 
         ivPoster                = findViewById(R.id.ImageViewPoster);
         rgDescription           = findViewById(R.id.RadioGroupDescription);
         rgTitle                 = findViewById(R.id.RadioGroupTitle);
         rgStartDate             = findViewById(R.id.radioGroupStartDate);
         rgEndDate               = findViewById(R.id.radioGroupEndDate);
+        rbCustomStartDate       = findViewById(R.id.radioButtonCustomStartDate);
+        rbCustomEndDate         = findViewById(R.id.radioButttonCustomEndDate);
         btnSaveSession          = findViewById(R.id.buttonSaveSession);
         btnCreateEvent          = findViewById(R.id.buttonCreatEvent);
         btnStartDateTimePicker  = findViewById(R.id.buttonStartDateTimePicker);
+        btnEndDateTimePicker    = findViewById(R.id.buttonEndDateTimePicker);
+
 
 
 
         //get intent and parse created activity
         Intent intent       = getIntent();
-        uriString           =  intent.getStringExtra(PPConstants.URI);
+        uriString           = intent.getStringExtra(PPConstants.URI);
         isFromSavedImage    = intent.hasExtra(PPConstants.SAVE_IMAGE_FLAG);
         rotation            = intent.getIntExtra(PPConstants.IMAGE_ROTATION, 0);
-
+        timestamp           = intent.getLongExtra(PPConstants.TIMESTAMP, 0L);
+        uid                 = intent.getIntExtra(PPConstants.UID, 0);
+        
+        thisEd =  new EventEntity();
+        thisEd.uid          = uid;
+        thisEd.rotation     =   rotation;
+        thisEd.timestamp    =   timestamp;
+        thisEd.imageUrl     = uriString;
 
         Log.d("Setting IMG", "Setting Image:  \""+ uriString+"\"");
         PPutils.setImagetoView(uriString, ivPoster, rotation);
 
-//TODO cleaner date logic
+        //TODO cleaner date logic
         //use relative date Time logic
         //https://developer.android.com/reference/android/icu/text/RelativeDateTimeFormatter
         df                  = new SimpleDateFormat("EEE MMM dd hh:mm:ss zzz yyyy");
@@ -116,12 +134,17 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
         parsedDataTreeMap   = new TreeMap();
         textRecognizer      = TextRecognition.getClient();
 
+
+        db = Room.databaseBuilder(getApplicationContext(), PPDatabase.class, "Poster-Parser").build();
+        ed = db.eventDao();
+
         final Uri bitmapUri = Uri.parse(uriString);
         Log.d(TAG, "onCreate: Rotation: "+rotation );
         try {
             InputStream stream = getContentResolver().openInputStream(
                     bitmapUri);
             bitmap = BitmapFactory.decodeStream(stream);
+
             stream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -145,7 +168,7 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                         .setStartDate(selectedEventStartDate)
                         .setEndDate(selectedEventEndDate)
                         .build();
-                startActivity(createEventIntent);
+                startActivityForResult(createEventIntent, PPConstants.CREATE_EVENT_INTENT);
             }
         });
 
@@ -154,8 +177,7 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
             public void onClick(View v) {
                 final EventEntity ee =  new EventEntity();
                 ee.imageUrl = bitmapUri.toString();
-                //If from a saved image
-                //Create an accesible file to store a copy of image
+
                 if(isFromSavedImage){
                     Log.d(TAG, "onClick: Saving Requested Image");
                     try {
@@ -176,15 +198,12 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                 //thread to save the image in
                 Thread t =  new Thread(){
                     public void run(){
-                        PPDatabase db = Room.databaseBuilder(getApplicationContext(), PPDatabase.class, "Poster-Parser").build();
-                        final EventDao ed = db.eventDao();
                         ed.insertAll(ee);
                         Log.d(TAG, "run: Event Saved");
                     }
                 };
 
                 t.start();
-                
             }
         });
 
@@ -192,8 +211,48 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
             @Override
             public void onClick(View v) {
                 //Create DateTime Picker Dialogue
-                DialogFragment dialog = DateTimePickerDialogFragment.newInstance(CreateEventActivity.this);
-                dialog.show(getSupportFragmentManager(), "dialog");
+                isStartDateTimePicker = true;
+                startDatePickerDialog();
+            }
+        });
+
+        btnEndDateTimePicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Create DateTime Picker Dialogue
+                isStartDateTimePicker = false;
+                startDatePickerDialog();
+            }
+        });
+
+        rbCustomStartDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rgStartDate.clearCheck();
+
+                //TODO set the start date to custom
+                // OR
+                //start dialogue picker to pick custom
+                Log.d(TAG, "onClick: Text:" +btnStartDateTimePicker.getText() );
+                if (btnStartDateTimePicker.getText().equals("Pick Date") ){
+                    isStartDateTimePicker = true;
+                    startDatePickerDialog();
+                }
+            }
+        });
+
+        rbCustomEndDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rgEndDate.clearCheck();
+
+                //TODO set the end date to custom
+                // OR
+                //start dialogue picker to pick custom
+                if (btnEndDateTimePicker.getText() == "Pick Date"){
+                    isStartDateTimePicker = false;
+                    startDatePickerDialog();
+                }
             }
         });
 
@@ -279,6 +338,30 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
         Log.d(TAG, "setTitleString: Description set to :" +selectedDescriptionString);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode ==  PPConstants.CREATE_EVENT_INTENT){
+            Log.d(TAG, "onActivityResult: resultCode: "+resultCode);
+            if(resultCode == RESULT_OK){
+                //TODO Delete saved session here
+
+                Thread t =  new Thread(){
+                    public void run(){
+                        ed.deleteAll(thisEd);
+                        Log.d(TAG, "run: Event delete");
+                        PPutils.toast(getApplicationContext(), "Session created");
+                        finishActivity(RESULT_OK);
+                    }
+                };
+
+                t.start();
+                
+            }
+
+        }
+    }
+
     private void updateDates(String value) {
         value = value.replace("\n", " ").trim();
         Log.d(TAG, "updateDates: value: \"" +value+"\"");
@@ -301,7 +384,7 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                         @Override
                         public void onClick(View v) {
                             setEventStartDate(rbStartDate.getText());
-
+                            rbCustomStartDate.setChecked(false);
                         }
                     });
                     rgStartDate.addView(rbStartDate);
@@ -312,12 +395,11 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                     rbEndDate.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            setSelectedEventEndDate(rbEndDate.getText());
-
+                            setEventEndDate(rbEndDate.getText());
+                            rbCustomEndDate.setChecked(false);
                         }
                     });
                     rgEndDate.addView(rbEndDate);
-                    Log.d(TAG, "updateDates: value parsed");
 
                 }
             }
@@ -340,7 +422,7 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
         }
     }
 
-    private void setSelectedEventEndDate(CharSequence text) {
+    private void setEventEndDate(CharSequence text) {
         try {
             selectedEventEndDate = df.parse(text.toString());
         } catch (ParseException e) {
@@ -350,12 +432,54 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
 
     @Override
     public void onDialogButtonSetDateClick(long longDate) {
+
+        if(!isTimeChanged ||!isDateChanged){
+            PPutils.toast(getApplicationContext(), "Please set time and date");
+            isTimeChanged   = false;
+            isDateChanged   = false;
+            return;
+        }
+
         PPutils.toast(getApplicationContext(), "Set Date picked: "+longDate);
+        Calendar c = Calendar.getInstance();
+        c.set(year,month,day,hour,minute);
+
+        if(isStartDateTimePicker){
+            customEventStartDate = c.getTime();
+            btnStartDateTimePicker.setText("Custom: " + customEventStartDate.toString());
+            return;
+        }
+
+        customEventEndDate = c.getTime();
+        btnEndDateTimePicker.setText("Custom: " + customEventEndDate.toString());
 
     }
 
     @Override
     public void onDialogCancelDateClick(DialogFragment dialog) {
         PPutils.toast(getApplicationContext(),"Set Date cancelled");
+    }
+
+    @Override
+    public void onDateChanged(int year, int month, int day) {
+        Log.d(TAG, "onDateChanged: DateChanged");
+        this.year   = year;
+        this.month  = month;
+        this.day   = day;
+        isDateChanged = true;
+    }
+
+
+    @Override
+    public void onTimeChanged(int hour, int minute) {
+        Log.d(TAG, "onTimeChanged: TimeChanged");
+        this.hour   =  hour;
+        this.minute =  minute;
+        isTimeChanged = true;
+    }
+
+    private void startDatePickerDialog(){
+        DialogFragment dialog = DateTimePickerDialogFragment.newInstance(CreateEventActivity.this);
+        dialog.show(getSupportFragmentManager(), "dialog");
     }
 }
