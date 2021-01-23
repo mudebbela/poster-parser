@@ -1,6 +1,7 @@
 package com.example.posterparser;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
@@ -14,5 +15,8 @@ public interface EventDao {
 
         @Insert
     void insertAll(EventEntity... eventEntities);
+
+        @Delete
+    void deleteAll(EventEntity ... eventEntities);
 
 }
