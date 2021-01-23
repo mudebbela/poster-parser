@@ -52,7 +52,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
         EventEntity ed = eventEntities.get(position);
         holder.setImage(ed.imageUrl, ed.rotation);
         holder.setDate(Long.toString(ed.timestamp));
-        holder.setListeners(ed.imageUrl, ed.rotation);
+        holder.setListeners(ed.imageUrl, ed.rotation, ed.uid, ed.timestamp);
 
     }
 
@@ -90,7 +90,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
         }
 
 
-        public void setListeners(final String imageUrl, final int rotation) {
+        public void setListeners(final String imageUrl, final int rotation, final int uid, final long timestamp) {
 
             mView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -98,6 +98,10 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.ViewHolder>{
                     Intent startCreateEventActivityIntent =  new Intent(ctx, CreateEventActivity.class);
                     startCreateEventActivityIntent.putExtra(PPConstants.URI, imageUrl);
                     startCreateEventActivityIntent.putExtra(PPConstants.IMAGE_ROTATION, rotation);
+                    startCreateEventActivityIntent.putExtra(PPConstants.UID, uid);
+                    startCreateEventActivityIntent.putExtra(PPConstants.TIMESTAMP, timestamp);
+
+
                     mView.getContext().startActivity(startCreateEventActivityIntent);
                 }
             });
