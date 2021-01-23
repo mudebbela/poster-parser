@@ -92,20 +92,16 @@ public class DateTimePickerDialogFragment extends DialogFragment {
         btSetDateTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO get datetime picker information here
-//                final DatePicker datePicker = viewPager.findViewById(R.id.datePicker);
-//                final TimePicker timePicker =  viewPager.findViewById(R.id.timePicker);
-//                Calendar date  =  Calendar.getInstance();
-//                int day = datePicker.getDayOfMonth();
-//                int month = datePicker.getMonth();
-//                int year = datePicker.getYear();
-//
-//                int hour = timePicker.getHour();
-//                int minute = timePicker.getMinute();
-//                date.set(year,month,day,hour,minute);
-//                longDate = date.getTime().getTime();
                 longDate = 12L;
+                //TODO update Datetime on dismiss
                 listener.onDialogButtonSetDateClick(longDate);
+                dismiss();
+            }
+        });
+
+        btCancelDateTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 dismiss();
             }
         });
