@@ -71,10 +71,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+
                 <RadioButton
+
+                    android:id="@+id/radioButtonCustomStartDate"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-                </RadioButton>
+                    android:layout_height="wrap_content"></RadioButton>
                 <Button
                     android:id="@+id/buttonStartDateTimePicker"
                     android:layout_width="match_parent"
@@ -88,13 +90,6 @@
 
         </RadioGroup>
 
-<!--        <DatePicker-->
-<!--            android:id="@+id/DatePickerStartDate"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:calendarViewShown="false"-->
-<!--            android:datePickerMode="spinner" />-->
-
 
         <TextView
             android:id="@+id/textView3"
@@ -107,6 +102,22 @@
             android:id="@+id/radioGroupEndDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radioButttonCustomEndDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"></RadioButton>
+                <Button
+                    android:id="@+id/buttonEndDateTimePicker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Pick Date" />
+            </LinearLayout>
 
         </RadioGroup>
 
