@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="VIEW PAGER GOES HERE" />
+        android:text="Select Date and Time For Event" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"

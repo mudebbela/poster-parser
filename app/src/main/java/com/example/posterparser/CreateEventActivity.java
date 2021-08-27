@@ -3,7 +3,6 @@ package com.example.posterparser;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.Guideline;
 import androidx.fragment.app.DialogFragment;
 import androidx.room.Room;
 
@@ -66,8 +65,10 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
     private DateFormat df;
 
     //Date from dialog variables
-    int year,month,day;
-    int minute,hour;
+    int customStartYear, customStartMonth, customStartDay;
+    int customStartMinute,customStartHour;
+    int customEndYear, customEndMonth, customEndDay;
+    int customEndMinute,customEndHour;
     private boolean isDateChanged, isTimeChanged;
     private boolean isStartDateTimePicker;
     Date customEventStartDate, customEventEndDate;
@@ -93,6 +94,8 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
 
         isDateChanged = false;
         isTimeChanged = false;
+        customStartHour = 0;
+        customStartMinute = 0;
 
         ivPoster                = findViewById(R.id.ImageViewPoster);
         rgDescription           = findViewById(R.id.RadioGroupDescription);
@@ -102,7 +105,7 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
         rbCustomStartDate       = findViewById(R.id.radioButtonCustomStartDate);
         rbCustomEndDate         = findViewById(R.id.radioButttonCustomEndDate);
         btnSaveSession          = findViewById(R.id.buttonSaveSession);
-        btnCreateEvent          = findViewById(R.id.buttonCreatEvent);
+        btnCreateEvent          = findViewById(R.id.buttonCreateEvent);
         btnStartDateTimePicker  = findViewById(R.id.buttonStartDateTimePicker);
         btnEndDateTimePicker    = findViewById(R.id.buttonEndDateTimePicker);
 
@@ -237,6 +240,13 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                 if (btnStartDateTimePicker.getText().equals("Pick Date") ){
                     isStartDateTimePicker = true;
                     startDatePickerDialog();
+                } else {
+                    //TODO set start date to Custom startDate
+                    Calendar c = Calendar.getInstance();
+                    c.set(customStartYear, customStartMonth, customStartDay,customStartHour, customStartMinute);
+                    Log.d(TAG, "onClick: setting start date to "+ c.getTime().toString());
+                    selectedEventStartDate = c.getTime();
+
                 }
             }
         });
@@ -252,6 +262,13 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                 if (btnEndDateTimePicker.getText() == "Pick Date"){
                     isStartDateTimePicker = false;
                     startDatePickerDialog();
+                } else {
+                    //TODO set end date to Custom endDate
+                    Calendar c = Calendar.getInstance();
+                    c.set(customEndYear, customEndMonth, customEndDay,customEndHour, customEndMinute);
+                    Log.d(TAG, "onClick: setting start date to "+ c.getTime().toString());
+                    selectedEventEndDate = c.getTime();
+
                 }
             }
         });
@@ -433,25 +450,27 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
     @Override
     public void onDialogButtonSetDateClick(long longDate) {
 
-        if(!isTimeChanged ||!isDateChanged){
-            PPutils.toast(getApplicationContext(), "Please set time and date");
-            isTimeChanged   = false;
-            isDateChanged   = false;
-            return;
-        }
+//        if(!isTimeChanged ||!isDateChanged){
+//            PPutils.toast(getApplicationContext(), "Please set time and date");
+//            isTimeChanged   = false;
+//            isDateChanged   = false;
+//            return;
+//        }
 
         PPutils.toast(getApplicationContext(), "Set Date picked: "+longDate);
         Calendar c = Calendar.getInstance();
-        c.set(year,month,day,hour,minute);
 
         if(isStartDateTimePicker){
+            c.set(customStartYear, customStartMonth, customStartDay,customStartHour, customStartMinute);
             customEventStartDate = c.getTime();
             btnStartDateTimePicker.setText("Custom: " + customEventStartDate.toString());
             return;
+        }else{
+            c.set(customEndYear, customEndMonth, customEndDay,customEndHour, customEndMinute);
+            customEventEndDate = c.getTime();
+            btnEndDateTimePicker.setText("Custom: " + customEventEndDate.toString());
         }
 
-        customEventEndDate = c.getTime();
-        btnEndDateTimePicker.setText("Custom: " + customEventEndDate.toString());
 
     }
 
@@ -463,18 +482,30 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
     @Override
     public void onDateChanged(int year, int month, int day) {
         Log.d(TAG, "onDateChanged: DateChanged");
-        this.year   = year;
-        this.month  = month;
-        this.day   = day;
+        if(isStartDateTimePicker){
+            this.customStartYear = year;
+            this.customStartMonth = month;
+            this.customStartDay = day;
+        } else {
+            this.customEndYear = year;
+            this.customEndMonth = month;
+            this.customEndDay = day;
+        }
         isDateChanged = true;
+
     }
 
 
     @Override
     public void onTimeChanged(int hour, int minute) {
         Log.d(TAG, "onTimeChanged: TimeChanged");
-        this.hour   =  hour;
-        this.minute =  minute;
+        if(isStartDateTimePicker){
+            this.customStartHour   =  hour;
+            this.customStartMinute =  minute;
+        } else{
+            this.customEndHour   =  hour;
+            this.customEndMinute =  minute;
+        }
         isTimeChanged = true;
     }
 
