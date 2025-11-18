@@ -37,12 +37,26 @@ public class EventBuilder {
     }
 
     public Intent build(){
-        return  new Intent(Intent.ACTION_INSERT)
-                .setData(CalendarContract.Events.CONTENT_URI)
+
+        Intent eventIntent =  new Intent(Intent.ACTION_INSERT);
+
+        eventIntent.setData(CalendarContract.Events.CONTENT_URI)
                 .putExtra(CalendarContract.Events.TITLE, name)
                 .putExtra(CalendarContract.Events.DESCRIPTION, description)
-                .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startDate.getTime())
-                .putExtra(CalendarContract.EXTRA_EVENT_END_TIME,endDate.getTime());
+        ;
+
+
+        if(startDate!=null){
+            eventIntent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startDate.getTime());
+        }
+
+
+        if(endDate!=null){
+            eventIntent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, endDate.getTime());
+        }
+
+
+        return  eventIntent;
     }
 
 

@@ -107,10 +107,10 @@ public class PPutils {
         Log.d(PPutils.class.getName(), "saveFile: create file "+ destinationFilename);
     }
 
-    public static long getSize(Text.TextBlock block) {
+    public static long getSize(Text.TextBlock line) {
         //get Size of block
-        Rect box = block.getBoundingBox();
-        int numOfLetters = block.getText().length();
+        Rect box = line.getBoundingBox();
+        int numOfLetters = line.getText().length();
         int height = box.top - box.bottom;
         int width = box.left -  box.right;
         return height * width/numOfLetters;
