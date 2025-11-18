@@ -26,6 +26,8 @@ import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.internal.TextRecognizerOptionsUtils;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.joestelmach.natty.*;
 
 import java.io.File;
@@ -135,7 +137,7 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
         df                  = new SimpleDateFormat("EEE MMM dd hh:mm:ss zzz yyyy");
         parser              = new Parser();
         parsedDataTreeMap   = new TreeMap();
-        textRecognizer      = TextRecognition.getClient();
+        textRecognizer      = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
 
         db = Room.databaseBuilder(getApplicationContext(), PPDatabase.class, "Poster-Parser").build();
@@ -289,8 +291,16 @@ public class CreateEventActivity extends AppCompatActivity implements DateTimePi
                     @Override
                     public void onSuccess(Text visionText) {
                         for (Text.TextBlock block : visionText.getTextBlocks()) {
+                            Log.d("FOUND LINE", block.getText());
                             long size = PPutils.getSize(block);
                             parsedDataTreeMap.put(size, block.getText());
+
+//                            for (Text.Line line :block.getLines()) {
+//                                Log.d("FOUND LINE", line.getText());
+//                                long size = PPutils.getSize(line);
+//                                parsedDataTreeMap.put(size, line.getText());
+//
+//                            }
                         }
                         updateRadioButtons(parsedDataTreeMap);
                     }
